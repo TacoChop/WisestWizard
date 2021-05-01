@@ -16,8 +16,8 @@ def main() -> None:
     map_width = 100
     map_height = 65
 
-    room_max_size = 20
-    room_min_size = 5
+    room_max_size = 25
+    room_min_size = 7
     max_rooms = 40
 
     max_enemies_per_room  = 3

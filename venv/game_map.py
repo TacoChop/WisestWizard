@@ -48,3 +48,26 @@ class GameMap:
             # Only print entities that are in the FOV.
             if self.visible[entity.x, entity.y]:
                 console.print(x=entity.x, y=entity.y, string=entity.char, fg=entity.color)
+
+    def adjacent_tile_types(self, x1: int, y1: int) -> np.ndarray:
+        """
+        Determines whether the tiles surrounding a specific tile are floor tiles or wall tiles. Returns a 3x3 array
+        where the value at (1, 1) is the given tile and the other values represent the tiles surrounding it. A 0 in the
+        array represents a floor tile and a 1 represents a wall tile.
+        :param x1: x coordinate of given tile.
+        :param y1: y coordinate of given tile.
+        :return: 2d array containing the values for the given tile and the tiles touching it.
+        """
+        tile_values = np.ones((3, 3), dtype=int, order="C")
+
+        for x2 in range(0, 3):
+            for y2 in range(0, 3):
+                x = x1 + x2 - 1
+                y = y1 + y2 - 1
+
+                if 0 <= x < len(self.tiles) and 0 <= y < len(self.tiles[0]):
+                    if self.tiles[x, y] == tile_types.floor:
+                        tile_values[y2, x2] = 0
+
+        # TODO: Update for other types of tiles.
+        return tile_values

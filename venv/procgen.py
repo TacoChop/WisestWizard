@@ -55,7 +55,7 @@ def place_entities(
         y = random.randint(room.y1 + 1, room.y2 - 1)
 
         if not any(entity.x == x and entity.y == y for entity in dungeon.entities) and dungeon.tiles[x, y] == tile_types.floor:
-            if random.random() < 0.5:
+            if random.random() < 0.8:
                 entity_factories.custodial_bot.spawn(dungeon, x, y)
             else:
                 entity_factories.security_bot.spawn(dungeon, x, y)
@@ -79,6 +79,177 @@ def tunnel_between(
     for x, y in tcod.los.bresenham((corner_x, corner_y), (x2, y2)).tolist():
         yield x, y
 
+def tile_picker(dungeon: GameMap, x: int, y: int) -> np.ndarray:
+    """
+    Uses the array returned by GameMap.adjacent_tile_types to determine the proper wall tile to represent a given tile.
+    :param dungeon: An instance of GameMap.
+    :param x: x coordinate for given tile.
+    :param y: y coordinate for given tile.
+    :return: Tile from tile_types to represent given tile.
+    """
+    adjacent_tiles = dungeon.adjacent_tile_types(x, y)
+    wall_tiles = np.flatnonzero(adjacent_tiles)
+
+    if len(wall_tiles) == 1:
+        return tile_types.pillar
+    elif len(wall_tiles) == 2:
+        if 1 in wall_tiles or 7 in wall_tiles:
+            return tile_types.vertical_wall
+        else:
+            return tile_types.horizontal_wall
+    elif len(wall_tiles) == 3:
+        if 1 in wall_tiles:
+            if 3 in wall_tiles:
+                return tile_types.left_up_wall
+            elif 5 in wall_tiles:
+                return tile_types.right_up_wall
+            else:
+                return tile_types.vertical_wall
+        elif 7 in wall_tiles:
+            if 3 in wall_tiles:
+                return tile_types.left_down_wall
+            elif 5 in wall_tiles:
+                return tile_types.right_down_wall
+            else:
+                return tile_types.horizontal_wall
+    elif len(wall_tiles) == 4 or len(wall_tiles) == 5:
+        if 1 in wall_tiles:
+            if 3 in wall_tiles and 5 in wall_tiles and 7 in wall_tiles:
+                return tile_types.cross
+            elif 3 in wall_tiles and 5 in wall_tiles:
+                return tile_types.t_up_wall
+            elif 3 in wall_tiles and 7 in wall_tiles:
+                return tile_types.t_left_wall
+            elif 5 in wall_tiles and 7 in wall_tiles:
+                return tile_types.t_right_wall
+            elif 3 in wall_tiles:
+                return tile_types.left_up_wall
+            elif 5 in wall_tiles:
+                return  tile_types.right_up_wall
+            else:
+                return tile_types.vertical_wall
+        elif 7 in wall_tiles:
+            if 3 in wall_tiles and 5 in wall_tiles:
+                return tile_types.t_down_wall
+            elif 3 in wall_tiles:
+                return tile_types.left_down_wall
+            elif 5 in wall_tiles:
+                return  tile_types.right_down_wall
+            else:
+                return tile_types.vertical_wall
+        else:
+            return  tile_types.horizontal_wall
+    elif len(wall_tiles) == 6:
+        if 1 in wall_tiles and 7 in wall_tiles:
+            if 3 in wall_tiles and 5 in wall_tiles:
+                return tile_types.cross
+            elif 3 in wall_tiles and 0 in wall_tiles and 6 in wall_tiles:
+                return tile_types.vertical_wall
+            elif 3 in wall_tiles and 2 in wall_tiles and 8 in wall_tiles:
+                return tile_types.t_left_wall
+            elif 3 in wall_tiles and 6 in wall_tiles and 0 not in wall_tiles:
+                return tile_types.left_up_wall
+            elif 3 in wall_tiles and 0 in wall_tiles and 6 not in wall_tiles:
+                return tile_types.left_down_wall
+            elif 5 in wall_tiles and 2 in wall_tiles and 8 in wall_tiles:
+                return tile_types.vertical_wall
+            elif 5 in wall_tiles and 0 in wall_tiles and 6 in wall_tiles:
+                return tile_types.t_right_wall
+            elif 5 in wall_tiles and 8 in wall_tiles and 2 not in wall_tiles:
+                return tile_types.right_up_wall
+            elif 5 in wall_tiles and 2 in wall_tiles and 8 not in wall_tiles:
+                return tile_types.right_down_wall
+            else:
+                return tile_types.horizontal_wall
+        elif 1 in wall_tiles and 3 in wall_tiles and 5 in wall_tiles:
+            if 6 in wall_tiles and 8 in wall_tiles:
+                return tile_types.t_up_wall
+            elif 2 in wall_tiles and 0 not in wall_tiles:
+                return tile_types.left_up_wall
+            elif 0 in wall_tiles and 2 not in wall_tiles:
+                return tile_types.right_up_wall
+            else:
+                return tile_types.horizontal_wall
+        elif 7 in wall_tiles and 3 in wall_tiles and 5 in wall_tiles:
+            if 0 in wall_tiles and 2 in wall_tiles:
+                return tile_types.t_down_wall
+            elif 8 in wall_tiles and 6 not in wall_tiles:
+                return tile_types.left_down_wall
+            elif 6 in wall_tiles and 8 not in wall_tiles:
+                return tile_types.right_down_wall
+            else:
+                return tile_types.horizontal_wall
+        elif 0 not in wall_tiles and 1 not in wall_tiles and 3 not in wall_tiles:
+            return tile_types.right_down_wall
+        elif 1 not in wall_tiles and 2 not in wall_tiles and 5 not in wall_tiles:
+            return tile_types.left_down_wall
+        elif 5 not in wall_tiles and 7 not in wall_tiles and 8 not in wall_tiles:
+            return tile_types.left_up_wall
+        elif 3 not in wall_tiles and 6 not in wall_tiles and 7 not in wall_tiles:
+            return tile_types.right_up_wall
+        else:
+            return tile_types.horizontal_wall
+    elif len(wall_tiles) == 7:
+        if 1 in wall_tiles and 3 in wall_tiles and 5 in wall_tiles and 7 in wall_tiles:
+            if 0 in wall_tiles and 8 in wall_tiles:
+                return tile_types.cross
+            elif 2 in wall_tiles and 6 in wall_tiles:
+                return tile_types.cross
+            elif 0 in wall_tiles and 2 in wall_tiles:
+                return tile_types.t_down_wall
+            elif 2 in wall_tiles and 8 in wall_tiles:
+                return tile_types.t_left_wall
+            elif 6 in wall_tiles and 8 in wall_tiles:
+                return tile_types.t_up_wall
+            elif 0 in wall_tiles and 6 in wall_tiles:
+                return tile_types.t_right_wall
+            else:
+                return tile_types.horizontal_wall
+        elif 1 in wall_tiles and 3 in wall_tiles and 5 in wall_tiles:
+            if 0 not in wall_tiles:
+                return tile_types.left_up_wall
+            elif 2 not in wall_tiles:
+                return tile_types.right_up_wall
+            else:
+                return tile_types.horizontal_wall
+        elif 3 in wall_tiles and 5 in wall_tiles and 7 in wall_tiles:
+            if 6 not in wall_tiles:
+                return tile_types.left_down_wall
+            elif 8 not in wall_tiles:
+                return tile_types.right_down_wall
+            else:
+                return  tile_types.horizontal_wall
+        elif 1 in wall_tiles and 3 in wall_tiles and 7 in wall_tiles:
+            if 0 not in wall_tiles:
+                return tile_types.left_up_wall
+            elif 6 not in wall_tiles:
+                return tile_types.left_down_wall
+            else:
+                return tile_types.vertical_wall
+        elif 1 in wall_tiles and 5 in wall_tiles and 7 in wall_tiles:
+            if 2 not in wall_tiles:
+                return tile_types.right_up_wall
+            elif 8 not in wall_tiles:
+                return tile_types.right_down_wall
+            else:
+                return tile_types.vertical_wall
+        else:
+            return tile_types.horizontal_wall
+    elif len(wall_tiles) == 8:
+        if 3 not in wall_tiles or 5 not in wall_tiles:
+            return tile_types.vertical_wall
+        elif 0 not in wall_tiles:
+            return tile_types.left_up_wall
+        elif 2 not in wall_tiles:
+            return tile_types.right_up_wall
+        elif 6 not in wall_tiles:
+            return tile_types.left_down_wall
+        elif 8 not in wall_tiles:
+            return tile_types.right_down_wall
+        else:
+            return tile_types.horizontal_wall
+    else:
+        return tile_types.horizontal_wall
 
 def generate_dungeon(
     max_rooms: int,
@@ -135,8 +306,9 @@ def generate_dungeon(
             dungeon.tiles[x - int(room.width / 3) + 1, y] = tile_types.pillar
             dungeon.tiles[x + int(room.width / 3) - 1, y] = tile_types.pillar
         elif room.width < int(room_max_size * 0.5) and room.height >= int(room_max_size * 0.5):
-            dungeon.tiles[x, y - int(room.height / 3) + 1] = tile_types.pillar
-            dungeon.tiles[x, y + int(room.height / 3) - 1] = tile_types.pillar
+            if random.random() > 0.5:
+                dungeon.tiles[x, y - int(room.height / 3) + 1] = tile_types.pillar
+                dungeon.tiles[x, y + int(room.height / 3) - 1] = tile_types.pillar
 
         place_entities(room, dungeon, max_enemies_per_room)
 
@@ -144,41 +316,9 @@ def generate_dungeon(
     for (x, y), tile in np.ndenumerate(dungeon.tiles):
         if tile != tile_types.floor and tile != tile_types.pillar:
             try:
-                if dungeon.tiles[x - 1, y] == tile_types.floor or dungeon.tiles[x + 1, y] == tile_types.floor:
-                    if dungeon.tiles[x + 1, y] == tile_types.horizontal_wall and dungeon.tiles[x + 1, y - 1] == tile_types.floor and dungeon.tiles[x + 1, y + 1] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.horizontal_wall
-                    else:
-                        dungeon.tiles[x, y] = tile_types.vertical_wall
-                if dungeon.tiles[x, y + 1] != tile_types.floor and dungeon.tiles[x + 1, y] != tile_types.floor:
-                    if dungeon.tiles[x + 1, y + 1] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.right_down_wall
-                    elif dungeon.tiles[x - 1, y] == tile_types.floor and dungeon.tiles[x, y - 1] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.right_down_wall
-                if dungeon.tiles[x, y - 1] != tile_types.floor and dungeon.tiles[x + 1, y] != tile_types.floor:
-                    if dungeon.tiles[x + 1, y - 1] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.right_up_wall
-                    elif dungeon.tiles[x - 1, y] == tile_types.floor and dungeon.tiles[x, y + 1] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.right_up_wall
-                if dungeon.tiles[x, y + 1] != tile_types.floor and dungeon.tiles[x - 1, y] != tile_types.floor:
-                    if dungeon.tiles[x - 1, y + 1] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.left_down_wall
-                    elif dungeon.tiles[x + 1, y] == tile_types.floor and dungeon.tiles[x, y - 1] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.left_down_wall
-                if dungeon.tiles[x, y - 1] != tile_types.floor and dungeon.tiles[x - 1, y] != tile_types.floor:
-                    if dungeon.tiles[x - 1, y - 1] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.left_up_wall
-                    elif dungeon.tiles[x + 1, y] == tile_types.floor and dungeon.tiles[x, y + 1] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.left_up_wall
-                if dungeon.tiles[x - 1, y - 1] == tile_types.floor and dungeon.tiles[x + 1, y - 1] == tile_types.floor and dungeon.tiles[x - 1, y + 1] == tile_types.floor and dungeon.tiles[x + 1, y + 1] == tile_types.floor:
-                    if dungeon.tiles[x, y - 1] == tile_types.floor and dungeon.tiles[x + 1, y] == tile_types.floor and dungeon.tiles[x, y + 1] == tile_types.floor and dungeon.tiles[x - 1, y] == tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.pillar
-                    elif dungeon.tiles[x, y - 1] != tile_types.floor and dungeon.tiles[x + 1, y] != tile_types.floor and dungeon.tiles[x, y + 1] != tile_types.floor and dungeon.tiles[x - 1, y] != tile_types.floor:
-                        dungeon.tiles[x, y] = tile_types.cross
-                if dungeon.tiles[x - 1, y] != tile_types.floor and dungeon.tiles[x, y - 1] == tile_types.floor and dungeon.tiles[x, y + 1] == tile_types.floor and dungeon.tiles[x + 1, y]:
-                    dungeon.tiles[x, y] = tile_types.horizontal_wall
+                tile_value = tile_picker(dungeon, x, y)
+                dungeon.tiles[x, y] = tile_value
             except:
                 continue
-        # TODO: Make more efficient and work out edge cases. Find way to do T tiles. Possibly a function that assigns
-            # each tile a value based on the tiles surrounding it. Value is then used to determine the tile type needed.
 
     return dungeon
