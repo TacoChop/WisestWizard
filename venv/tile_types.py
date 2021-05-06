@@ -114,3 +114,9 @@ cross = new_tile(
     dark=(0x256C, (0, 48, 64), (0, 0, 0)),
     light=(0x256C, (0, 191, 255), (26, 26, 26)),
 )
+door = new_tile(
+    walkable=True,
+    transparent=False,
+    dark=(0x2229, (0, 48, 64), (0, 0, 0)),
+    light=(0x2229, (128, 128, 128), (26, 26, 26)),
+)

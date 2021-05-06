@@ -173,6 +173,8 @@ def tile_picker(dungeon: GameMap, x: int, y: int) -> np.ndarray:
         elif 7 in wall_tiles and 3 in wall_tiles and 5 in wall_tiles:
             if 0 in wall_tiles and 2 in wall_tiles:
                 return tile_types.t_down_wall
+            elif 2 in wall_tiles and 8 in wall_tiles or 0 in wall_tiles and 6 in wall_tiles:
+                return tile_types.t_down_wall
             elif 8 in wall_tiles and 6 not in wall_tiles:
                 return tile_types.left_down_wall
             elif 6 in wall_tiles and 8 not in wall_tiles:
@@ -321,5 +323,34 @@ def generate_dungeon(
                 dungeon.tiles[x, y] = tile_value
             except:
                 continue
+
+    # Insert doors where single tile tunnels pass through the walls of rooms.
+    for room in rooms:
+        for x in range(1, room.width):
+            if (
+                dungeon.tiles[room.x1 + x, room.y1] == tile_types.floor and
+                dungeon.tiles[room.x1 + x + 1, room.y1] != tile_types.floor and
+                dungeon.tiles[room.x1 + x - 1, room.y1] != tile_types.floor
+            ):
+                dungeon.tiles[room.x1 + x, room.y1] = tile_types.door
+            if (
+                dungeon.tiles[room.x1 + x, room.y2] == tile_types.floor and
+                dungeon.tiles[room.x1 + x + 1, room.y2] != tile_types.floor and
+                dungeon.tiles[room.x1 + x - 1, room.y2] != tile_types.floor
+            ):
+                dungeon.tiles[room.x1 + x, room.y2] = tile_types.door
+        for y in range(1, room.height):
+            if (
+                dungeon.tiles[room.x1, room.y1 + y] == tile_types.floor and
+                dungeon.tiles[room.x1, room.y1 + y + 1] != tile_types.floor and
+                dungeon.tiles[room.x1, room.y1 + y - 1] != tile_types.floor
+            ):
+                dungeon.tiles[room.x1, room.y1 + y] = tile_types.door
+            if (
+                dungeon.tiles[room.x2, room.y1 + y] == tile_types.floor and
+                dungeon.tiles[room.x2, room.y1 + y + 1] != tile_types.floor and
+                dungeon.tiles[room.x2, room.y1 + y - 1] != tile_types.floor
+            ):
+                dungeon.tiles[room.x2, room.y1 + y] = tile_types.door
 
     return dungeon
