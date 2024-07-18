@@ -3,5 +3,5 @@ from enum import auto, Enum
 
 class RenderOrder(Enum):
     CORPSE = auto()
-    ITEM = autp()
+    ITEM = auto()
     ACTOR = auto()
